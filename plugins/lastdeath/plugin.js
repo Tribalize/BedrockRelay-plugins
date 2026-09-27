@@ -21,12 +21,15 @@ const CAUSES = {
   sonicBoom: "was obliterated by a sonic boom", stalactite: "was skewered by a stalactite", stalagmite: "was impaled on a stalagmite",
 };
 
+/** A killer can be gone by the time we hear of the death: a creeper that blew up, a despawned mob. Its type is still readable; its name isn't. */
+function killerName(killer) {
+  try { return killer.typeId === "minecraft:player" ? killer.name : killer.nameTag || prettyName(killer.typeId); }
+  catch { return prettyName(killer.typeId); }
+}
+
 function describeCause(damageSource) {
   const killer = damageSource?.damagingEntity;
-  if (killer) {
-    const name = killer.typeId === "minecraft:player" ? killer.name : killer.nameTag || prettyName(killer.typeId);
-    return `was killed by ${name}`;
-  }
+  if (killer) return `was killed by ${killerName(killer)}`;
   return CAUSES[damageSource?.cause] ?? "died";
 }
 
@@ -81,7 +84,7 @@ function field(death, index) {
 export default {
   id: "lastdeath",
   name: "Last death",
-  version: "1.0.0",
+  version: "1.0.1",
   description: "Where and how a player last died, and what they dropped, so they can get their things back.",
   privacy: "Shows the coordinates of where a player died, which can be near their base.",
   commands: [

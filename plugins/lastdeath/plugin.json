@@ -1,7 +1,7 @@
 {
   "id": "lastdeath",
   "name": "Last death",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "BedrockRelay",
   "description": "Where and how a player last died, and what they dropped, so they can get their things back. Remembers each player's last three deaths, even while they're offline.",
   "privacy": "Shows the coordinates of where a player died, which can be near their base.",
