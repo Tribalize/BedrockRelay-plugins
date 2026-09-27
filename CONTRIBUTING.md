@@ -25,6 +25,7 @@ reviewed against.
   "privacy": "Shows a player's current health.",
   "homepage": "https://github.com/you/health",
   "minPackVersion": "0.3.0",
+  "category": "players",
   "commands": ["/health <player>"],
   "screenshots": [
     { "file": "discord.png", "caption": "/health answering in Discord" }
@@ -43,6 +44,7 @@ reviewed against.
 | `posts` | if it posts by itself | What it posts with `postToDiscord`, e.g. "Playtime milestones." Shown in the catalog. Must match `posts` in `plugin.js`. |
 | `homepage` | no | An `https` link to your source or docs. |
 | `minPackVersion` | yes | The oldest BedrockRelay pack it works with: `0.4.2` if it uses `postKinds`, `0.4.0` if it uses `choices`, `public`, `confirm`, `posts` or `linkedPlayer`, otherwise `0.3.0`. |
+| `category` | no | Where owners find it when filtering the catalog: one of `moderation`, `players`, `stats`, `world`, `fun` or `tools`. Reviewers may suggest a better fit. |
 | `commands` | yes | How each command is used, for the catalog page. |
 | `screenshots` | no | Up to 4 pictures of the plugin in Discord, shown on its catalog card. Each is a `file` in the plugin's folder (PNG, JPEG or WebP, under 1 MB) and a `caption` saying what it shows, which is also its alt text. Crop to the message itself; the card shows the top of each picture, and a click shows it whole. |
 

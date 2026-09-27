@@ -6,6 +6,7 @@
   "description": "The state of the world, for everyone in the channel: day, time, weather, moon, difficulty, game rules, server speed (TPS) and what's loaded in each dimension.",
   "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/world",
   "minPackVersion": "0.4.0",
+  "category": "world",
   "commands": ["/world"],
   "screenshots": [
     { "file": "discord.png", "caption": "/world: time, weather, game rules and what's loaded in each dimension" }

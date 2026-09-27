@@ -7,6 +7,7 @@
   "privacy": "Shows the coordinates of where a player died, which can be near their base.",
   "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/lastdeath",
   "minPackVersion": "0.4.0",
+  "category": "players",
   "commands": ["/lastdeath [player]"],
   "screenshots": [
     { "file": "discord.png", "caption": "/lastdeath: how, when and where a player died, and what they dropped" }
