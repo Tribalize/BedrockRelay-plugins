@@ -124,7 +124,7 @@ const same = (a, b) => a.toLowerCase() === b.toLowerCase();
 export default {
   id: "leaderboards",
   name: "Leaderboards",
-  version: "1.0.0",
+  version: "1.1.0",
   description: "Top tens for playtime, deaths, kills, blocks mined and placed, and distance travelled, offline players included.",
   posts: "Playtime milestones: when someone reaches 10, 25, 50, 100, 250, 500 or 1,000 hours.",
   commands: [
@@ -132,6 +132,8 @@ export default {
       name: "top",
       description: "The top ten players for one statistic",
       public: true,
+      // live:True keeps it in the channel, updated every 10 minutes (the owner can change that).
+      board: { every: 10 },
       options: [{
         name: "stat", type: "string", description: "Which statistic", required: true,
         choices: Object.entries(STATS).map(([value, stat]) => ({ name: stat.name, value })),
