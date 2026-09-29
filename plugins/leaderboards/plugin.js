@@ -12,6 +12,9 @@ import { postToDiscord } from "../relay/api.js";
 const ID = "leaderboards";
 const PREFIX = "bedrockrelay:lb:";
 const MILESTONE_HOURS = [10, 25, 50, 100, 250, 500, 1000];
+// BedrockRelay's own bot on a Realm carries this tag: it isn't a player, so it's never counted or ranked.
+const BOT_TAG = "bedrockrelay:bot";
+const isBot = (player) => { try { return player.hasTag(BOT_TAG); } catch { return false; } };
 
 const hours = (seconds) => {
   const h = Math.floor(seconds / 3600);
@@ -50,6 +53,7 @@ function record(id, name) {
 
 function add(player, key, amount = 1) {
   const entry = record(player.id, player.name);
+  if (entry.bot) return entry;
   entry[key] = (entry[key] ?? 0) + amount;
   dirty.add(player.id);
   return entry;
@@ -63,12 +67,18 @@ function save() {
 }
 system.runInterval(save, 600);
 
-/** Every player ever counted, offline ones included. */
+/** Every player ever counted, offline ones included; never the bot. */
 function everyone() {
   for (const property of world.getDynamicPropertyIds()) {
     if (property.startsWith(PREFIX)) record(property.slice(PREFIX.length));
   }
-  return [...cache.values()];
+  return [...cache.values()].filter((entry) => !entry.bot);
+}
+
+/** Mark the bot's record once, so what 1.1.0 counted for it stays off the boards even while it's away. */
+function markBot(player) {
+  const entry = record(player.id, player.name);
+  if (!entry.bot) { entry.bot = true; dirty.add(player.id); }
 }
 
 /* ---------------- Counting ---------------- */
@@ -81,6 +91,7 @@ system.runInterval(() => {
   const seconds = Math.min(5, (now - lastTick) / 1000);
   lastTick = now;
   for (const player of world.getAllPlayers()) {
+    if (isBot(player)) { markBot(player); continue; }
     const entry = add(player, "pt", seconds);
     const reached = MILESTONE_HOURS.filter((h) => entry.pt >= h * 3600).pop();
     if (reached && reached > (entry.mh ?? 0)) {
@@ -124,7 +135,7 @@ const same = (a, b) => a.toLowerCase() === b.toLowerCase();
 export default {
   id: "leaderboards",
   name: "Leaderboards",
-  version: "1.1.0",
+  version: "1.1.1",
   description: "Top tens for playtime, deaths, kills, blocks mined and placed, and distance travelled, offline players included.",
   posts: "Playtime milestones: when someone reaches 10, 25, 50, 100, 250, 500 or 1,000 hours.",
   commands: [
