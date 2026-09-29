@@ -1,6 +1,6 @@
 # Entity scan for BedrockRelay
 
-This private plugin adds two Discord commands for a BedrockRelay-connected
+This plugin adds two Discord commands for a BedrockRelay-connected
 Minecraft Bedrock server:
 
 - `/entities <player> [chunks]` lists counts for every currently loaded entity
@@ -15,10 +15,12 @@ square-chunk count. It can only find entities in currently loaded areas.
 
 ## Installation and access
 
-1. In the BedrockRelay dashboard, open **Plugins** and choose **Upload a
-   plugin** under **Your own plugins**.
-2. Upload `plugin.js` from this folder, then install/enable it on the intended
-   Minecraft server.
+1. Keep `plugin.js` and `plugin.json` together when adding this plugin to a
+   BedrockRelay plugin folder or catalog repository. `plugin.json` supplies the
+   catalog-facing ID, command list, compatibility and privacy metadata.
+2. In the BedrockRelay dashboard, open **Plugins** and choose **Upload a
+   plugin** under **Your own plugins**. Upload `plugin.js` from this folder,
+   then install/enable it on the intended Minecraft server.
 3. Use BedrockRelay's command/role controls to choose which Discord
    administrators or roles may run `/entities` and `/lagcheck`.
 

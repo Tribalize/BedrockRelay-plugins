@@ -1,0 +1,12 @@
+{
+  "id": "entity-scan",
+  "name": "Entity scan",
+  "version": "1.0.1",
+  "author": "PPTribalize",
+  "description": "Counts currently loaded entities in a bounded radius around an online player, and highlights common lag contributors such as dropped items, XP orbs, projectiles, vehicles, armor stands and villagers.",
+  "privacy": "Shows which player is being inspected and what entities are currently near their location, which can reveal activity around a base.",
+  "minPackVersion": "0.4.0",
+  "platforms": ["server"],
+  "category": "tools",
+  "commands": ["/entities <player> [chunks]", "/lagcheck <player> [chunks]"]
+}
