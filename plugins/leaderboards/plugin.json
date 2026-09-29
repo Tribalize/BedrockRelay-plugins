@@ -7,6 +7,7 @@
   "posts": "Playtime milestones: when someone reaches 10, 25, 50, 100, 250, 500 or 1,000 hours.",
   "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/leaderboards",
   "minPackVersion": "0.4.0",
+  "platforms": ["server", "realm"],
   "category": "stats",
   "commands": ["/top <stat>", "/stats [player]"],
   "screenshots": [

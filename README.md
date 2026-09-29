@@ -18,6 +18,7 @@ plugins/<id>/
   plugin.js     the plugin, exactly as installed on a Minecraft server
   plugin.json   how it appears in the catalog
   *.png         optional screenshots of it in Discord, listed in plugin.json
+  README.md     optional: anything owners should know before installing it
 ```
 
 Owners install exactly the `plugin.js` that was reviewed and merged here.

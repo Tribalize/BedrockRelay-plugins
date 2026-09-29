@@ -7,6 +7,7 @@
   "privacy": "This shows everything a player is carrying and keeps in their ender chest, so keep it to people you trust.",
   "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/inventory",
   "minPackVersion": "0.3.0",
+  "platforms": ["server", "realm"],
   "category": "moderation",
   "commands": ["/inventory <player>", "/enderchest <player>"],
   "screenshots": [
