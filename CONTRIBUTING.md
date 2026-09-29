@@ -10,8 +10,8 @@ you confirm that you wrote it or otherwise have the right to license it that
 way. Don't submit code copied from somewhere with a different licence.
 
 Read the [developer guide](https://bedrockrelay.com/developers.html) first. It
-explains the plugin format, and the best practices your plugin will be
-reviewed against.
+explains the plugin format, and the [best practices](https://bedrockrelay.com/developers/best-practices.html)
+your plugin will be reviewed against.
 
 ## plugin.json
 
@@ -25,6 +25,7 @@ reviewed against.
   "privacy": "Shows a player's current health.",
   "homepage": "https://github.com/you/health",
   "minPackVersion": "0.3.0",
+  "platforms": ["server", "realm"],
   "category": "players",
   "commands": ["/health <player>"],
   "screenshots": [
@@ -43,7 +44,9 @@ reviewed against.
 | `privacy` | if it reveals anything about players | Shown beside the plugin's switch. |
 | `posts` | if it posts by itself | What it posts with `postToDiscord`, e.g. "Playtime milestones." Shown in the catalog. Must match `posts` in `plugin.js`. |
 | `homepage` | no | An `https` link to your source or docs. |
-| `minPackVersion` | yes | The oldest BedrockRelay pack it works with: `0.4.2` if it uses `postKinds`, `0.4.0` if it uses `choices`, `public`, `confirm`, `posts`, `linkedPlayer` or `board`, otherwise `0.3.0`. |
+| `minPackVersion` | yes | The oldest BedrockRelay pack it works with: `0.4.2` if it uses `postKinds`, `0.4.0` if it uses `choices`, `public`, `confirm`, `posts`, `linkedPlayer`, `board` or a drawn picture, otherwise `0.3.0`. |
+| `platforms` | no | Where it runs: `["server"]`, `["realm"]` or both. Missing means dedicated servers only. Only add `"realm"` once it has run on a Realm: see [Plugins on Realms](https://bedrockrelay.com/developers/realms.html). |
+| `minRealmPackVersion` | no | The oldest Realm pack it works with. Defaults to `1.2.0`. |
 | `category` | no | Where owners find it when filtering the catalog: one of `moderation`, `players`, `stats`, `world`, `fun` or `tools`. Reviewers may suggest a better fit. |
 | `commands` | yes | How each command is used, for the catalog page. |
 | `screenshots` | no | Up to 4 pictures of the plugin in Discord, shown on its catalog card. Each is a `file` in the plugin's folder (PNG, JPEG or WebP, under 1 MB) and a `caption` saying what it shows, which is also its alt text. Crop to the message itself; the card shows the top of each picture, and a click shows it whole. |
@@ -54,6 +57,7 @@ reviewed against.
 - It follows the best practices: quick `run()`, handles missing players and bad input, prefixes anything it stores with its id.
 - No network access, no `@minecraft/server-net` or `@minecraft/server-admin`, no reading server secrets or variables.
 - It declares `privacy` if it reveals anything about players.
+- If it's marked for Realms, it uses only the stable Script API and leaves players tagged `bedrockrelay:bot` out of anything it counts or lists.
 - Anything that changes the world is stated in its description and asks first with `confirm`.
 - Only answers meant for everyone are `public`, and it only posts by itself when it declares `posts`.
 - The code is readable: no minified, obfuscated or generated code, and a single file.
