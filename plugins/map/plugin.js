@@ -38,13 +38,14 @@ const WOODS = { pale_oak: "quartz", dark_oak: "brown", oak: "wood", spruce: "pod
 /** A block's map colour, by the same families the game uses. */
 function colourOf(typeId) {
   const id = typeId.replace(/^minecraft:/, "");
+  if (id === "waterlily") return C.plant;
   if (id.includes("water") || id === "bubble_column") return C.water;
   if (id.includes("lava") || id === "fire") return C.fire;
   if (id.includes("ice")) return C.ice;
   if (id.includes("snow")) return C.snow;
   if (id === "pale_oak_leaves") return C.light_gray;
   if (id === "cherry_leaves") return C.pink;
-  if (id.endsWith("leaves") || id === "cactus" || id.includes("vine") || id === "lily_pad" || id.startsWith("azalea")) return C.plant;
+  if (id.endsWith("leaves") || id === "cactus" || id.includes("vine") || id.startsWith("azalea")) return C.plant;
   if (id === "grass_block" || id.startsWith("moss")) return C.grass;
   if (id === "pale_moss_block" || id === "pale_moss_carpet") return C.light_gray;
   if (id === "mycelium") return C.purple;
@@ -83,20 +84,29 @@ function colourOf(typeId) {
 
 const downward = { x: 0, y: -1, z: 0 };
 
-/** The first solid (or liquid) block looking straight down, and for water how deep it is. */
+/**
+ * The first solid block looking straight down, or the water (or lava) over it,
+ * and for water how deep it is. Rays treat liquids as passable, so a ray that
+ * skips passable blocks goes straight through water even with
+ * includeLiquidBlocks, and getTopmostBlock skips it too. So: find the floor,
+ * and only if liquid sits on it (seagrass and kelp are waterlogged, not
+ * liquid) look again for the surface.
+ */
 function column(dimension, x, z, fromY) {
   try {
-    const hit = dimension.getBlockFromRay({ x: x + 0.5, y: fromY, z: z + 0.5 }, downward, { includeLiquidBlocks: true, includePassableBlocks: false, maxDistance: fromY + 70 });
-    const block = hit?.block;
-    const id = block?.typeId;
-    if (!id) return null;
-    const y = block.location.y;
-    let depth = 0;
-    if (id.includes("water")) {
-      const floor = dimension.getBlockFromRay({ x: x + 0.5, y: y - 0.01, z: z + 0.5 }, downward, { includeLiquidBlocks: false, includePassableBlocks: false, maxDistance: 64 })?.block;
-      depth = floor ? y - floor.location.y : 16;
+    const start = { x: x + 0.5, y: fromY, z: z + 0.5 };
+    const floor = dimension.getBlockFromRay(start, downward, { includeLiquidBlocks: false, includePassableBlocks: false, maxDistance: fromY + 70 })?.block;
+    if (!floor?.typeId) return null;
+    const y = floor.location.y;
+    const above = dimension.getBlock({ x, y: y + 1, z });
+    if (above && (above.isLiquid || above.isWaterlogged)) {
+      const surface = dimension.getBlockFromRay(start, downward, { includeLiquidBlocks: true, includePassableBlocks: true, maxDistance: fromY - y })?.block;
+      if (surface?.typeId && surface.location.y > y) {
+        const id = surface.typeId;
+        return { id, y: surface.location.y, depth: id.includes("water") ? surface.location.y - y : 0 };
+      }
     }
-    return { id, y, depth };
+    return { id: floor.typeId, y, depth: 0 };
   } catch {
     // Outside the chunks the server is ticking.
     return null;
@@ -176,7 +186,7 @@ const DIMENSIONS = { "minecraft:overworld": "Overworld", "minecraft:nether": "Ne
 export default {
   id: "map",
   name: "Map",
-  version: "1.0.0",
+  version: "1.0.1",
   description: "A map of the land around a player, drawn like an in-game map, with their head in the middle.",
   privacy: "A map shows the land around a player, which can give away where their base is, so keep this to people you trust.",
   commands: [
