@@ -23,6 +23,23 @@ system.runInterval(() => {
 }, 20);
 const tps = () => (samples.length ? samples.reduce((sum, value) => sum + value, 0) / samples.length : 20);
 
+/**
+ * The Overworld's weather. Dimension.getWeather() is in the beta API only, so a
+ * Realm (no Beta APIs) doesn't have it: there, remember what the stable
+ * weatherChange event last said, and until it says something, leave it out.
+ */
+let heardWeather = null;
+world.afterEvents.weatherChange.subscribe(({ dimension, newWeather }) => {
+  if (String(dimension).endsWith("overworld")) heardWeather = newWeather;
+});
+function weather() {
+  const overworld = world.getDimension("minecraft:overworld");
+  if (typeof overworld.getWeather === "function") {
+    try { return overworld.getWeather(); } catch { /* fall back to what we heard */ }
+  }
+  return heardWeather;
+}
+
 function clock(ticks) {
   // Tick 0 is 6:00 in the morning.
   const minutes = Math.floor(((ticks / 1000 + 6) % 24) * 60);
@@ -51,7 +68,7 @@ const count = (amount, noun) => `${amount} ${noun}${amount === 1 ? "" : "s"}`;
 export default {
   id: "world",
   name: "World",
-  version: "1.0.1",
+  version: "1.0.2",
   description: "The state of the world: day, time, weather, moon, difficulty, game rules, server speed and what's loaded in each dimension.",
   commands: [
     {
@@ -65,11 +82,12 @@ export default {
         const fields = [
           { name: "Day", value: String(world.getDay()), inline: true },
           { name: "Time", value: clock(world.getTimeOfDay()), inline: true },
-          { name: "Weather", value: WEATHER[world.getDimension("minecraft:overworld").getWeather()] ?? "Unknown", inline: true },
           { name: "Moon", value: MOON[world.getMoonPhase()] ?? "Unknown", inline: true },
           { name: "Difficulty", value: String(world.getDifficulty()), inline: true },
           { name: "Server speed", value: `${speed >= 19 ? "🟢" : speed >= 15 ? "🟡" : "🔴"} ${speed.toFixed(1)} TPS`, inline: true },
         ];
+        const now = weather();
+        if (now) fields.splice(2, 0, { name: "Weather", value: WEATHER[now] ?? String(now), inline: true });
         const rules = world.gameRules;
         fields.push({
           name: "Game rules",

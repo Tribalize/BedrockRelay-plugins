@@ -1,7 +1,7 @@
 {
   "id": "world",
   "name": "World",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "BedrockRelay",
   "description": "The state of the world, for everyone in the channel: day, time, weather, moon, difficulty, game rules, server speed (TPS) and what's loaded in each dimension.",
   "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/world",
