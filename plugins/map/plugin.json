@@ -7,6 +7,7 @@
   "privacy": "A map shows the land around a player, which can give away where their base is, so keep this to people you trust.",
   "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/map",
   "minPackVersion": "0.4.0",
+  "platforms": ["server", "realm"],
   "category": "world",
   "commands": [
     "/map [player]"
