@@ -77,8 +77,27 @@ function everyone() {
 
 /** Mark the bot's record once, so what 1.1.0 counted for it stays off the boards even while it's away. */
 function markBot(player) {
+  untaggedSince.delete(player.id);
   const entry = record(player.id, player.name);
   if (!entry.bot) { entry.bot = true; dirty.add(player.id); }
+}
+
+/**
+ * A Realm owner can lend their own account as the bot for a while, then play on it again: the
+ * Realm pack takes the tag off, and a minute without it makes them a player again, with what
+ * they'd counted before. A minute, because our bot is untagged for its first few seconds too.
+ */
+const UNMARK_AFTER_MS = 60_000;
+const untaggedSince = new Map();
+function maybeUnmark(player, now) {
+  const entry = record(player.id, player.name);
+  if (!entry.bot) return;
+  const since = untaggedSince.get(player.id) ?? now;
+  untaggedSince.set(player.id, since);
+  if (now - since < UNMARK_AFTER_MS) return;
+  delete entry.bot;
+  dirty.add(player.id);
+  untaggedSince.delete(player.id);
 }
 
 /* ---------------- Counting ---------------- */
@@ -92,6 +111,7 @@ system.runInterval(() => {
   lastTick = now;
   for (const player of world.getAllPlayers()) {
     if (isBot(player)) { markBot(player); continue; }
+    maybeUnmark(player, now);
     const entry = add(player, "pt", seconds);
     const reached = MILESTONE_HOURS.filter((h) => entry.pt >= h * 3600).pop();
     if (reached && reached > (entry.mh ?? 0)) {
@@ -117,7 +137,7 @@ system.runInterval(() => {
   }
 }, 20);
 
-world.afterEvents.playerLeave.subscribe(({ playerId }) => lastPosition.delete(playerId));
+world.afterEvents.playerLeave.subscribe(({ playerId }) => { lastPosition.delete(playerId); untaggedSince.delete(playerId); });
 world.afterEvents.playerBreakBlock.subscribe(({ player }) => add(player, "bm"));
 world.afterEvents.playerPlaceBlock.subscribe(({ player }) => add(player, "bp"));
 world.afterEvents.entityDie.subscribe(({ deadEntity, damageSource }) => {
@@ -135,7 +155,7 @@ const same = (a, b) => a.toLowerCase() === b.toLowerCase();
 export default {
   id: "leaderboards",
   name: "Leaderboards",
-  version: "1.1.1",
+  version: "1.1.2",
   description: "Top tens for playtime, deaths, kills, blocks mined and placed, and distance travelled, offline players included.",
   posts: "Playtime milestones: when someone reaches 10, 25, 50, 100, 250, 500 or 1,000 hours.",
   commands: [
