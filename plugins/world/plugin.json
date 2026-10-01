@@ -1,15 +1,15 @@
 {
   "id": "world",
   "name": "World",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "author": "BedrockRelay",
-  "description": "The state of the world, for everyone in the channel: day, time, weather, moon, difficulty, game rules, server speed (TPS) and what's loaded in each dimension.",
+  "description": "The state of the world, for everyone in the channel: day, time, a countdown to nightfall or daybreak, weather, moon, difficulty, who is on and server speed (TPS). Add live: True to /world to keep it in a channel, updated every minute.",
   "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/world",
   "minPackVersion": "0.4.0",
   "platforms": ["server", "realm"],
   "category": "world",
   "commands": ["/world"],
   "screenshots": [
-    { "file": "discord.png", "caption": "/world: time, weather, game rules and what's loaded in each dimension" }
+    { "file": "discord.png", "caption": "/world: the day, time, weather and a countdown to nightfall" }
   ]
 }
