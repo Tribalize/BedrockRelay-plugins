@@ -1,0 +1,20 @@
+{
+  "id": "map-markers",
+  "name": "Map markers",
+  "version": "1.0.0",
+  "author": "BedrockRelay",
+  "description": "Players put markers on your BedrockMap map from in game: type /relay, then add a marker where you stand, with a name, a description and one of your map's types, or delete one of their own. Your map decides who may place them.",
+  "privacy": "A marker shows where it was placed and who placed it, on a map that may be public.",
+  "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/map-markers",
+  "minPackVersion": "0.10.0",
+  "platforms": [
+    "server",
+    "realm"
+  ],
+  "requires": [
+    "bedrockmap"
+  ],
+  "category": "world",
+  "commands": [],
+  "minRealmPackVersion": "1.5.0"
+}

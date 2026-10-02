@@ -69,14 +69,14 @@ function total(player) {
 /* ---------------- Sessions and playtime ---------------- */
 
 world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
-  if (!initialSpawn || isBot(player)) return;
+  if (!initialSpawn || !player || isBot(player)) return;
   record(player.id).j = Date.now();
   dirty.add(player.id);
 });
 
 // Players already on when the plugin loads (after a /reload) keep the session they had. Not during startup, when the world can't be read yet.
 system.run(() => {
-  for (const player of world.getAllPlayers()) {
+  for (const player of world.getAllPlayers().filter(Boolean)) {
     if (isBot(player)) continue;
     const entry = record(player.id);
     if (!entry.j) { entry.j = Date.now(); dirty.add(player.id); }
@@ -89,7 +89,7 @@ system.runInterval(() => {
   // Real seconds, capped so a stalled server doesn't hand out free hours.
   const seconds = Math.min(5, (now - lastTick) / 1000);
   lastTick = now;
-  for (const player of world.getAllPlayers()) {
+  for (const player of world.getAllPlayers().filter(Boolean)) {
     if (isBot(player)) continue;
     const entry = record(player.id);
     entry.pt = (entry.pt ?? 0) + seconds;
@@ -102,7 +102,7 @@ system.runInterval(() => {
 export default {
   id: "playerlist",
   name: "Player list",
-  version: "1.0.0",
+  version: "1.0.1",
   description: "Who is online right now, the device each is playing on, and their playtime.",
   commands: [
     {
@@ -114,7 +114,7 @@ export default {
       options: [],
       run() {
         const now = Date.now();
-        const players = world.getAllPlayers()
+        const players = world.getAllPlayers().filter(Boolean)
           .filter((player) => !isBot(player))
           .map((player) => ({ player, since: record(player.id).j ?? now }))
           .sort((a, b) => a.since - b.since);

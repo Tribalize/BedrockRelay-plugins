@@ -1,7 +1,7 @@
 {
   "id": "playercard",
   "name": "Player card",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "BedrockRelay",
   "description": "How a player is doing right now: health, hunger, level, game mode, dimension, effects, the device they play on and how long they've been online.",
   "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/playercard",

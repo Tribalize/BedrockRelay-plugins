@@ -1,7 +1,7 @@
 {
   "id": "playerlist",
   "name": "Player list",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "BedrockRelay",
   "description": "Who is online right now, whether each is on PC, mobile or console, how long they've been on and their playtime in total. Add live: True to /playerlist to keep the list in a channel, updated every minute. With Leaderboards installed, both show the same playtime.",
   "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/playerlist",

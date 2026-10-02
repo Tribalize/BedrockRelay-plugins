@@ -186,7 +186,7 @@ const DIMENSIONS = { "minecraft:overworld": "Overworld", "minecraft:nether": "Ne
 export default {
   id: "map",
   name: "Map",
-  version: "1.0.1",
+  version: "1.0.2",
   description: "A map of the land around a player, drawn like an in-game map, with their head in the middle.",
   privacy: "A map shows the land around a player, which can give away where their base is, so keep this to people you trust.",
   commands: [
@@ -217,7 +217,7 @@ export default {
           // Everyone else in the square, where they stand; the player themselves in the middle.
           const markers = [{ x: BORDER + SIZE / 2, y: BORDER + SIZE / 2, player: player.name }];
           for (const other of dimension.getPlayers()) {
-            if (other.id === player.id || other.hasTag(BOT_TAG) || markers.length >= 10) continue;
+            if (!other || other.id === player.id || other.hasTag(BOT_TAG) || markers.length >= 10) continue;
             const mx = Math.floor(other.location.x) - left, mz = Math.floor(other.location.z) - top;
             if (mx >= 0 && mz >= 0 && mx < SIZE && mz < SIZE) markers.push({ x: BORDER + mx, y: BORDER + mz, player: other.name });
           }

@@ -109,7 +109,7 @@ system.runInterval(() => {
   // Real seconds, capped so a stalled server doesn't hand out free hours.
   const seconds = Math.min(5, (now - lastTick) / 1000);
   lastTick = now;
-  for (const player of world.getAllPlayers()) {
+  for (const player of world.getAllPlayers().filter(Boolean)) {
     if (isBot(player)) { markBot(player); continue; }
     maybeUnmark(player, now);
     const entry = add(player, "pt", seconds);
@@ -155,7 +155,7 @@ const same = (a, b) => a.toLowerCase() === b.toLowerCase();
 export default {
   id: "leaderboards",
   name: "Leaderboards",
-  version: "1.1.2",
+  version: "1.1.3",
   description: "Top tens for playtime, deaths, kills, blocks mined and placed, and distance travelled, offline players included.",
   posts: "Playtime milestones: when someone reaches 10, 25, 50, 100, 250, 500 or 1,000 hours.",
   commands: [

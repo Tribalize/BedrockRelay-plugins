@@ -70,7 +70,7 @@ function countdown(ticks, speed) {
 export default {
   id: "world",
   name: "World",
-  version: "1.1.0",
+  version: "1.1.1",
   description: "The state of the world: day, time, weather, moon, difficulty, who's on and server speed. Can stay in a channel, updated every minute.",
   commands: [
     {
@@ -83,7 +83,7 @@ export default {
       run() {
         const ticks = world.getTimeOfDay();
         const speed = tps();
-        const online = world.getAllPlayers().filter((player) => !isBot(player)).length;
+        const online = world.getAllPlayers().filter((player) => player && !isBot(player)).length;
         const fields = [
           { name: "Day", value: String(world.getDay()), inline: true },
           { name: "Time", value: clock(ticks), inline: true },

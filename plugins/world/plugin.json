@@ -1,7 +1,7 @@
 {
   "id": "world",
   "name": "World",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "BedrockRelay",
   "description": "The state of the world, for everyone in the channel: day, time, a countdown to nightfall or daybreak, weather, moon, difficulty, who is on and server speed (TPS). Add live: True to /world to keep it in a channel, updated every minute.",
   "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/world",
