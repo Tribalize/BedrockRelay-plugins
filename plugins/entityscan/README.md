@@ -5,13 +5,20 @@ Minecraft Bedrock server:
 
 - `/entities <player> [chunks]` lists counts for every currently loaded entity
   type near an online player.
-- `/lagcheck <player> [chunks]` shows a focused summary of dropped items, XP
-  orbs, projectiles, primed TNT, falling blocks, vehicles, armor stands and
-  villagers, plus the most common other entity types.
+- `/lagcheck <player> [entity_type] [chunks]` shows a focused summary of
+  dropped items, XP orbs, projectiles, primed TNT, falling blocks, vehicles,
+  armor stands and villagers. With `entity_type`, it instead counts that type
+  and lists its nearest loaded-entity coordinate snapshots.
 
 `chunks` is a **radius** choice: 1 through 6 chunks (16 through 96
 blocks). The scan is a 3D radius around the player, not a whole-world or exact
 square-chunk count. It can only find entities in currently loaded areas.
+
+For example, `/lagcheck Steve minecart` counts loaded minecarts near Steve and
+lists up to 15 nearest coordinates. Common short names include `item`, `xp`,
+`armorstand`, `minecart`, and `villager`; full IDs such as
+`minecraft:chest_minecart` also work. Coordinates are a point-in-time snapshot
+and may change before an administrator reaches them.
 
 ## Installation and access
 
@@ -29,7 +36,7 @@ only to the requester. BedrockRelay performs the Discord permission check
 before the plugin's `run()` function is called; the plugin does not receive
 Discord roles or tokens and cannot make a separate in-code role list.
 
-The current file is version **1.1.0**. If an earlier version is already
+The current file is version **1.1.1**. If an earlier version is already
 installed, use **Upload new version**, install the update for the server, and
 restart BDS.
 

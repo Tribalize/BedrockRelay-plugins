@@ -16,6 +16,7 @@ const DEFAULT_SCAN_CHUNKS = 4;
 const MAX_SCAN_CHUNKS = 6;
 const SCAN_COOLDOWN_MS = 15_000;
 const MAX_TYPES_SHOWN = 15;
+const MAX_LOCATIONS_SHOWN = 15;
 const BOT_TAG = "bedrockrelay:bot";
 
 let nextScanAt = 0;
@@ -48,6 +49,7 @@ function scanNear(player, chunks) {
   if (wait > 0) return { error: `Please wait ${Math.ceil(wait / 1000)} seconds before the next entity scan.` };
 
   const radius = chunks * 16;
+  const center = { x: player.location.x, y: player.location.y, z: player.location.z };
   let entities;
   try {
     // A sphere around the player, not a whole-dimension scan.
@@ -58,18 +60,21 @@ function scanNear(player, chunks) {
 
   nextScanAt = now + SCAN_COOLDOWN_MS;
   const counts = new Map();
+  const snapshots = [];
   let total = 0;
   for (const entity of entities) {
     try {
       if (isBot(entity)) continue;
       const type = entity.typeId;
       counts.set(type, (counts.get(type) ?? 0) + 1);
+      const location = entity.location;
+      snapshots.push({ type, location: { x: location.x, y: location.y, z: location.z } });
       total++;
     } catch {
       // An entity can disappear between the query and this loop.
     }
   }
-  return { counts, chunks, radius, total };
+  return { counts, chunks, radius, center, snapshots, total };
 }
 
 function sortedCounts(counts) {
@@ -117,6 +122,38 @@ function lagSummary(counts) {
   return [...groups.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 }
 
+function normaliseEntityType(value) {
+  const typed = String(value ?? "").trim().toLowerCase();
+  if (!typed) return null;
+  const aliases = {
+    item: "minecraft:item",
+    items: "minecraft:item",
+    dropped_item: "minecraft:item",
+    dropped_items: "minecraft:item",
+    xp: "minecraft:xp_orb",
+    xp_orb: "minecraft:xp_orb",
+    experience_orb: "minecraft:xp_orb",
+    armorstand: "minecraft:armor_stand",
+  };
+  const simplified = typed.replace(/[ -]/g, "_");
+  if (aliases[simplified]) return aliases[simplified];
+  return simplified.includes(":") ? simplified : `minecraft:${simplified}`;
+}
+
+function distanceSquared(a, b) {
+  return (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2;
+}
+
+function coordinateLines(matches, center) {
+  const sorted = [...matches].sort((a, b) => distanceSquared(a.location, center) - distanceSquared(b.location, center));
+  const shown = sorted.slice(0, MAX_LOCATIONS_SHOWN).map(({ location }) =>
+    `• \`${Math.floor(location.x)}, ${Math.floor(location.y)}, ${Math.floor(location.z)}\``,
+  );
+  const hidden = sorted.length - shown.length;
+  if (hidden) shown.push(`…and ${hidden} more`);
+  return shown.join("\n") || "_None_";
+}
+
 function scanInfo(scan) {
   return `${scan.chunks} ${scan.chunks === 1 ? "chunk" : "chunks"} · ${scan.radius}-block radius · currently loaded entities only`;
 }
@@ -160,6 +197,24 @@ function lagcheckCommand(args) {
   const { error, player, scan } = prepare(args);
   if (error) return error;
 
+  if (args.entity_type !== undefined) {
+    const type = normaliseEntityType(args.entity_type);
+    if (!type) return "Choose an entity type to locate, such as `item`, `minecart`, or `villager`.";
+    const matches = scan.snapshots.filter((snapshot) => snapshot.type === type);
+    return {
+      embed: {
+        color: matches.length ? 0xe67e22 : 0x57f287,
+        author: { name: `${prettyName(type)} near ${player.name}`, player: player.name },
+        fields: [
+          { name: "Scan", value: scanInfo(scan), inline: false },
+          { name: "Matching entities", value: String(matches.length), inline: true },
+          { name: "Coordinates", value: coordinateLines(matches, scan.center) },
+        ],
+        footer: { text: "Locations are a loaded-entity snapshot and may change before you arrive." },
+      },
+    };
+  }
+
   const suspects = lagSummary(scan.counts);
   const otherTypes = sortedCounts(new Map([...scan.counts].filter(([type]) => type !== "minecraft:player" && !lagGroup(type))));
   const suspectText = suspects.length
@@ -181,29 +236,39 @@ function lagcheckCommand(args) {
   };
 }
 
-const OPTIONS = [
-  { name: "player", type: "player", description: "The player whose surroundings to scan", required: true },
-  {
-    name: "chunks", type: "integer", description: "How far to look, in chunks (one chunk is 16 blocks)", required: false,
-    choices: Array.from({ length: MAX_SCAN_CHUNKS }, (_, index) => {
-      const chunks = index + 1;
-      return { name: `${chunks} ${chunks === 1 ? "chunk" : "chunks"} · ${chunks * 16} blocks`, value: chunks };
-    }),
-  },
+const PLAYER_OPTION = { name: "player", type: "player", description: "The player whose surroundings to scan", required: true };
+
+const CHUNKS_OPTION = {
+  name: "chunks", type: "integer", description: "How far to look, in chunks (one chunk is 16 blocks)", required: false,
+  choices: Array.from({ length: MAX_SCAN_CHUNKS }, (_, index) => {
+    const chunks = index + 1;
+    return { name: `${chunks} ${chunks === 1 ? "chunk" : "chunks"} · ${chunks * 16} blocks`, value: chunks };
+  }),
+};
+
+const ENTITIES_OPTIONS = [
+  PLAYER_OPTION,
+  CHUNKS_OPTION,
+];
+
+const LAGCHECK_OPTIONS = [
+  PLAYER_OPTION,
+  { name: "entity_type", type: "string", description: "Optional entity type to count and locate, e.g. item or minecart", required: false },
+  CHUNKS_OPTION,
 ];
 
 export default {
   id: "entity-scan",
   name: "Entity scan",
-  version: "1.1.0",
-  description: "Counts the loaded entities within up to 96 blocks of an online player, and picks out common lag contributors such as dropped items, XP orbs, projectiles, primed TNT, minecarts, armor stands and villagers.",
+  version: "1.1.1",
+  description: "Counts the loaded entities within up to 96 blocks of an online player, highlights common lag contributors, and can locate matching entity types.",
   privacy: "Shows which player is being looked at and what entities are near them, which can reveal activity around a base.",
   minPackVersion: "0.4.0",
   commands: [
     {
       name: "entities",
       description: "Count loaded entities around an online player",
-      options: OPTIONS,
+      options: ENTITIES_OPTIONS,
       run(args) {
         return entitiesCommand(args);
       },
@@ -211,7 +276,7 @@ export default {
     {
       name: "lagcheck",
       description: "Pick out likely entity-related lag near an online player",
-      options: OPTIONS,
+      options: LAGCHECK_OPTIONS,
       run(args) {
         return lagcheckCommand(args);
       },
