@@ -1,7 +1,7 @@
 {
   "id": "audit",
   "name": "Audit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "BedrockRelay",
   "description": "Posts when someone places TNT or end crystals, pours lava, starts fires, spawns a wither or kills a villager, and optionally mines diamonds, breaks shulker boxes or places netherite. Switch each on or off. It only watches: nothing is stopped.",
   "privacy": "Posts who did what, and where, which can give away where someone's base is.",

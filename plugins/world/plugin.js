@@ -1,13 +1,17 @@
 import { system, world } from "@minecraft/server";
-import { prettyName } from "../relay/api.js";
 
 /**
  * World — a BedrockRelay plugin.
  * /world shows the state of the world: day, time, weather, moon, difficulty,
- * game rules, how the server is running and what's loaded in each dimension.
+ * who's on and how the server is running. live: True keeps it in the channel,
+ * updated every minute, with a countdown to nightfall or daybreak that Discord
+ * ticks down by itself in between.
  */
 
-const DIMENSIONS = [["minecraft:overworld", "Overworld"], ["minecraft:nether", "Nether"], ["minecraft:the_end", "The End"]];
+// BedrockRelay's own bot on a Realm carries this tag: it isn't a player, so it's never counted.
+const BOT_TAG = "bedrockrelay:bot";
+const isBot = (player) => { try { return player.hasTag(BOT_TAG); } catch { return false; } };
+
 // Numbered as the Script API numbers them.
 const MOON = ["🌕 Full moon", "🌖 Waning gibbous", "🌓 First quarter", "🌘 Waning crescent", "🌑 New moon", "🌒 Waxing crescent", "🌗 Last quarter", "🌔 Waxing gibbous"];
 const WEATHER = { Clear: "☀️ Clear", Rain: "🌧️ Rain", Thunder: "⛈️ Thunderstorm" };
@@ -47,67 +51,58 @@ function clock(ticks) {
   return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")} (${phase})`;
 }
 
-function loaded(dimensionId) {
-  let entities;
-  try { entities = world.getDimension(dimensionId).getEntities(); } catch { return null; }
-  const counts = new Map();
-  let items = 0;
-  for (const entity of entities) {
-    if (entity.typeId === "minecraft:item") { items++; continue; }
-    if (entity.typeId === "minecraft:player") continue;
-    counts.set(entity.typeId, (counts.get(entity.typeId) ?? 0) + 1);
-  }
-  const mobs = [...counts.values()].reduce((sum, value) => sum + value, 0);
-  const top = [...counts].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([typeId, amount]) => `${prettyName(typeId)} ${amount}`);
-  return { mobs, items, top };
+/**
+ * When night falls (tick 13000) or day breaks (tick 0), as a Discord timestamp
+ * that counts down by itself. Left out when time stands still or the server is
+ * too slow for the estimate to mean anything. Sleeping or /time set make it
+ * wrong only until the next refresh.
+ */
+function countdown(ticks, speed) {
+  let cycle = true;
+  try { cycle = world.gameRules.doDayLightCycle; } catch { /* assume it runs */ }
+  if (!cycle || speed < 15) return null;
+  const night = ticks < 13000;
+  const left = night ? 13000 - ticks : 24000 - ticks;
+  const at = Math.round((Date.now() + (left / speed) * 1000) / 1000);
+  return { name: night ? "Night falls" : "Day breaks", value: `<t:${at}:R>`, inline: true };
 }
-
-const onOff = (value) => (value ? "On" : "Off");
-const count = (amount, noun) => `${amount} ${noun}${amount === 1 ? "" : "s"}`;
 
 export default {
   id: "world",
   name: "World",
-  version: "1.0.2",
-  description: "The state of the world: day, time, weather, moon, difficulty, game rules, server speed and what's loaded in each dimension.",
+  version: "1.1.1",
+  description: "The state of the world: day, time, weather, moon, difficulty, who's on and server speed. Can stay in a channel, updated every minute.",
   commands: [
     {
       name: "world",
       description: "Day, time, weather and how the server is running",
       public: true,
+      // live:True keeps it in the channel, updated every minute (the owner can change that).
+      board: { every: 1 },
       options: [],
       run() {
-        const players = world.getAllPlayers();
+        const ticks = world.getTimeOfDay();
         const speed = tps();
+        const online = world.getAllPlayers().filter((player) => player && !isBot(player)).length;
         const fields = [
           { name: "Day", value: String(world.getDay()), inline: true },
-          { name: "Time", value: clock(world.getTimeOfDay()), inline: true },
+          { name: "Time", value: clock(ticks), inline: true },
+        ];
+        const next = countdown(ticks, speed);
+        if (next) fields.push(next);
+        const now = weather();
+        if (now) fields.push({ name: "Weather", value: WEATHER[now] ?? String(now), inline: true });
+        fields.push(
           { name: "Moon", value: MOON[world.getMoonPhase()] ?? "Unknown", inline: true },
           { name: "Difficulty", value: String(world.getDifficulty()), inline: true },
+          { name: "Players", value: String(online), inline: true },
           { name: "Server speed", value: `${speed >= 19 ? "🟢" : speed >= 15 ? "🟡" : "🔴"} ${speed.toFixed(1)} TPS`, inline: true },
-        ];
-        const now = weather();
-        if (now) fields.splice(2, 0, { name: "Weather", value: WEATHER[now] ?? String(now), inline: true });
-        const rules = world.gameRules;
-        fields.push({
-          name: "Game rules",
-          value: [`Keep inventory: **${onOff(rules.keepInventory)}**`, `PvP: **${onOff(rules.pvp)}**`, `Mob griefing: **${onOff(rules.mobGriefing)}**`,
-            `Daylight cycle: **${onOff(rules.doDayLightCycle)}**`].join(" · "),
-          inline: false,
-        });
-        for (const [id, label] of DIMENSIONS) {
-          const here = players.filter((player) => player.dimension.id === id).length;
-          const stats = loaded(id);
-          if (!stats) continue;
-          const parts = [count(here, "player"), count(stats.mobs, "mob"), count(stats.items, "dropped item")];
-          fields.push({ name: label, value: `${parts.join(" · ")}${stats.top.length ? `\nMost common: ${stats.top.join(", ")}` : ""}`, inline: false });
-        }
+        );
         return {
           embed: {
             color: 0x5865f2,
             title: "The world right now",
             fields,
-            footer: { text: "Mobs and items count only what's loaded, near players." },
           },
         };
       },

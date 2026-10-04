@@ -140,7 +140,9 @@ world.afterEvents.entitySpawn.subscribe(({ entity, cause }) => {
   const by = usedNear("minecraft:wither_skeleton_skull", dimension, location, 6);
   if (by) { note("wither", { who: by, action: "spawned a **wither**", dimension, location }); return; }
   // Nobody placed a skull here (a command, perhaps): say who was nearby, not who did it.
-  const near = dimension.getPlayers({ location, maxDistance: 32, closest: 1 })[0]?.name;
+  // A simulated player another pack spawned is undefined here, so closest:1 could pick it.
+  const near = dimension.getPlayers({ location, maxDistance: 32 }).filter(Boolean)
+    .sort((a, b) => distance(a.location, location) - distance(b.location, location))[0]?.name;
   note("wither", { action: `A **wither** appeared${near ? ` near **${escape(near)}**` : ""}`, dimension, location });
 });
 
@@ -157,7 +159,7 @@ world.afterEvents.entityDie.subscribe(({ deadEntity, damageSource }) => {
 export default {
   id: "audit",
   name: "Audit",
-  version: "1.0.0",
+  version: "1.0.1",
   description: "Posts when someone places TNT or end crystals, pours lava, starts fires, spawns a wither or kills a villager, and optionally mines diamonds, breaks shulker boxes or places netherite. It only watches: nothing is stopped.",
   privacy: "Posts who did what, and where, which can give away where someone's base is.",
   posts: "Risky things players do, each switchable: TNT, end crystals, respawn anchors, lava, fire, withers, villagers, rare ores, shulker boxes, netherite.",
@@ -186,3 +188,7 @@ export default {
     },
   ],
 };
+
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+}

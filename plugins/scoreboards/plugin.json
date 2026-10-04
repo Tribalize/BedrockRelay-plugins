@@ -1,11 +1,12 @@
 {
   "id": "scoreboards",
   "name": "Scoreboards",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "BedrockRelay",
   "description": "Top tens from any scoreboard on your world, such as money, kills or points kept by other addons, for everyone in the channel. Offline players stay on the board. Post one from the dashboard, or add live: True to /scoreboard, to keep a board in a channel that updates itself.",
   "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/scoreboards",
   "minPackVersion": "0.4.0",
+  "platforms": ["server", "realm"],
   "category": "stats",
   "commands": ["/scoreboard <scoreboard>", "/scores [player]"]
 }

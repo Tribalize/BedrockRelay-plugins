@@ -35,7 +35,7 @@ function remembered(id) {
 
 /** Note each online player's scoreboard identity: they only get one once they have a score. */
 function remember() {
-  for (const player of world.getAllPlayers()) {
+  for (const player of world.getAllPlayers().filter(Boolean)) {
     const id = player.scoreboardIdentity?.id;
     if (id === undefined) continue;
     const entry = { n: player.name, ...(isBot(player) ? { bot: true } : {}) };
@@ -116,7 +116,7 @@ const objectiveOption = {
 export default {
   id: "scoreboards",
   name: "Scoreboards",
-  version: "1.0.0",
+  version: "1.0.1",
   description: "Top tens from any scoreboard on your world, such as money, kills or points kept by other addons. Offline players stay on the board.",
   commands: [
     {

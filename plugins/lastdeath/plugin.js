@@ -84,7 +84,7 @@ function field(death, index) {
 export default {
   id: "lastdeath",
   name: "Last death",
-  version: "1.0.1",
+  version: "1.0.2",
   description: "Where and how a player last died, and what they dropped, so they can get their things back.",
   privacy: "Shows the coordinates of where a player died, which can be near their base.",
   commands: [
@@ -96,7 +96,7 @@ export default {
         const name = player ?? linkedPlayer;
         if (!name) return "Say which player, or link your own with `/relay link` so this knows who you are.";
         const deaths = history(name);
-        const online = world.getAllPlayers().find((item) => item.name.toLowerCase() === name.toLowerCase());
+        const online = world.getAllPlayers().filter(Boolean).find((item) => item.name.toLowerCase() === name.toLowerCase());
         const shown = online?.name ?? name;
         if (!deaths.length) return `No deaths recorded for **${shown}** since this plugin was installed.`;
         const newest = deaths[0];

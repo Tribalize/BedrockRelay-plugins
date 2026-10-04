@@ -14,8 +14,8 @@ const NUMERALS = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X
 /** When each player joined, by id, so the card can say how long they've been on. */
 const joinedAt = new Map();
 // Players already on when the plugin loads (after a /reload). Not during startup, when the world can't be read yet.
-system.run(() => { for (const player of world.getAllPlayers()) if (!joinedAt.has(player.id)) joinedAt.set(player.id, Date.now()); });
-world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => { if (initialSpawn) joinedAt.set(player.id, Date.now()); });
+system.run(() => { for (const player of world.getAllPlayers().filter(Boolean)) if (!joinedAt.has(player.id)) joinedAt.set(player.id, Date.now()); });
+world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => { if (initialSpawn && player) joinedAt.set(player.id, Date.now()); });
 world.afterEvents.playerLeave.subscribe(({ playerId }) => joinedAt.delete(playerId));
 
 /** Ten symbols for a value out of a maximum, like the game's own bars. */
@@ -39,7 +39,7 @@ function current(player, id) {
 export default {
   id: "playercard",
   name: "Player card",
-  version: "1.0.0",
+  version: "1.0.1",
   description: "How a player is doing right now: health, hunger, level, game mode, effects, device and time online.",
   commands: [
     {
