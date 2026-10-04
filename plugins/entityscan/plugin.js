@@ -1,21 +1,22 @@
 import { prettyName, findPlayer } from "../relay/api.js";
 
 /**
- * Entity scan — a private BedrockRelay plugin.
+ * Entity scan — a BedrockRelay plugin, by PPTribalize.
  *
- * /entities <player> [chunks] gives a compact inventory of every currently
- * loaded entity near an online player. /lagcheck uses the same bounded scan,
- * but highlights entity kinds that are commonly worth checking when a world
- * is slow. Both commands are deliberately non-public: BedrockRelay's
- * dashboard decides which Discord administrators and roles may run them.
+ * /entities <player> [chunks] counts every currently loaded entity near an
+ * online player. /lagcheck uses the same scan, but picks out the kinds of
+ * entity that are commonly worth checking when a world is slow. Both are
+ * private answers; the dashboard decides who may run them.
+ *
+ * One getEntities() call per command, limited to a 96-block radius, with one
+ * cooldown shared by both commands.
  */
 
-// Server-owner tuning. A chunk is 16 blocks. Do not make MAX_SCAN_CHUNKS
-// large: getEntities() returns every matching loaded entity at once.
 const DEFAULT_SCAN_CHUNKS = 4;
 const MAX_SCAN_CHUNKS = 6;
 const SCAN_COOLDOWN_MS = 15_000;
 const MAX_TYPES_SHOWN = 15;
+const BOT_TAG = "bedrockrelay:bot";
 
 let nextScanAt = 0;
 
@@ -29,6 +30,8 @@ const PROJECTILES = new Set([
   "minecraft:trident",
   "minecraft:wind_charge",
 ]);
+
+const isBot = (entity) => { try { return entity.typeId === "minecraft:player" && entity.hasTag(BOT_TAG); } catch { return false; } };
 
 function normaliseChunks(value) {
   if (value === undefined) return { chunks: DEFAULT_SCAN_CHUNKS };
@@ -47,7 +50,7 @@ function scanNear(player, chunks) {
   const radius = chunks * 16;
   let entities;
   try {
-    // This is a bounded 3D radius around the player, not a whole-server scan.
+    // A sphere around the player, not a whole-dimension scan.
     entities = player.dimension.getEntities({ location: player.location, maxDistance: radius });
   } catch {
     return { error: `Couldn't scan near **${player.name}**. Their area may have unloaded; try again.` };
@@ -55,15 +58,18 @@ function scanNear(player, chunks) {
 
   nextScanAt = now + SCAN_COOLDOWN_MS;
   const counts = new Map();
+  let total = 0;
   for (const entity of entities) {
     try {
+      if (isBot(entity)) continue;
       const type = entity.typeId;
       counts.set(type, (counts.get(type) ?? 0) + 1);
+      total++;
     } catch {
       // An entity can disappear between the query and this loop.
     }
   }
-  return { counts, chunks, radius, total: entities.length };
+  return { counts, chunks, radius, total };
 }
 
 function sortedCounts(counts) {
@@ -93,6 +99,8 @@ function lagGroup(type) {
   if (type === "minecraft:item") return "Dropped items";
   if (type === "minecraft:xp_orb") return "XP orbs";
   if (PROJECTILES.has(type)) return "Projectiles";
+  if (type === "minecraft:tnt") return "Primed TNT";
+  if (type === "minecraft:falling_block") return "Falling blocks";
   if (type.includes("minecart")) return "Minecarts";
   if (type === "minecraft:armor_stand") return "Armor stands";
   if (type.includes("boat")) return "Boats";
@@ -115,22 +123,28 @@ function scanInfo(scan) {
 
 function requestedPlayer(name) {
   const player = findPlayer(name);
-  if (!player) return { error: `**${name}** isn't online right now, so there is no area to scan.` };
+  if (!player || isBot(player)) return { error: `**${name}** isn't online right now, so there is no area to scan.` };
   return { player };
 }
 
-function entitiesCommand({ player: name, chunks: requestedChunks }) {
+function prepare({ player: name, chunks: requestedChunks }) {
   const target = requestedPlayer(name);
-  if (target.error) return target.error;
+  if (target.error) return target;
   const parsed = normaliseChunks(requestedChunks);
-  if (parsed.error) return parsed.error;
+  if (parsed.error) return parsed;
   const scan = scanNear(target.player, parsed.chunks);
-  if (scan.error) return scan.error;
+  if (scan.error) return scan;
+  return { player: target.player, scan };
+}
+
+function entitiesCommand(args) {
+  const { error, player, scan } = prepare(args);
+  if (error) return error;
   const rows = sortedCounts(scan.counts);
   return {
     embed: {
       color: 0x5865f2,
-      author: { name: `Entities near ${target.player.name}`, player: target.player.name },
+      author: { name: `Entities near ${player.name}`, player: player.name },
       fields: [
         { name: "Scan", value: scanInfo(scan), inline: false },
         { name: "Total", value: String(scan.total), inline: true },
@@ -142,86 +156,64 @@ function entitiesCommand({ player: name, chunks: requestedChunks }) {
   };
 }
 
-function lagcheckCommand({ player: name, chunks: requestedChunks }) {
-  const target = requestedPlayer(name);
-  if (target.error) return target.error;
-  const parsed = normaliseChunks(requestedChunks);
-  if (parsed.error) return parsed.error;
-  const scan = scanNear(target.player, parsed.chunks);
-  if (scan.error) return scan.error;
+function lagcheckCommand(args) {
+  const { error, player, scan } = prepare(args);
+  if (error) return error;
 
   const suspects = lagSummary(scan.counts);
   const otherTypes = sortedCounts(new Map([...scan.counts].filter(([type]) => type !== "minecraft:player" && !lagGroup(type))));
   const suspectText = suspects.length
     ? suspects.map(([group, count]) => `• **${group}** ×${count}`).join("\n")
-    : "_No dropped items, XP orbs, projectiles, vehicles, armor stands, or villagers found._";
+    : "_No dropped items, XP orbs, projectiles, primed TNT, falling blocks, vehicles, armor stands or villagers found._";
 
   return {
     embed: {
       color: suspects.length ? 0xe67e22 : 0x57f287,
-      author: { name: `Lag check near ${target.player.name}`, player: target.player.name },
+      author: { name: `Lag check near ${player.name}`, player: player.name },
       fields: [
         { name: "Scan", value: scanInfo(scan), inline: false },
         { name: "Total entities", value: String(scan.total), inline: true },
         { name: "Common lag contributors", value: suspectText },
         { name: "Largest other entity types", value: compactLines(otherTypes, 8) },
       ],
-      footer: { text: "This is a snapshot. Repeat only after the 15-second scan cooldown." },
+      footer: { text: "This is a snapshot. A large farm of one animal can matter as much as anything above." },
     },
   };
 }
 
+const OPTIONS = [
+  { name: "player", type: "player", description: "The player whose surroundings to scan", required: true },
+  {
+    name: "chunks", type: "integer", description: "How far to look, in chunks (one chunk is 16 blocks)", required: false,
+    choices: Array.from({ length: MAX_SCAN_CHUNKS }, (_, index) => {
+      const chunks = index + 1;
+      return { name: `${chunks} ${chunks === 1 ? "chunk" : "chunks"} · ${chunks * 16} blocks`, value: chunks };
+    }),
+  },
+];
+
 export default {
-  // Keep this literal: BedrockRelay's private-plugin upload validation reads it.
   id: "entity-scan",
   name: "Entity scan",
-  version: "1.0.1",
-  description: "Counts currently loaded entities in a bounded radius around an online player, and highlights common lag contributors such as dropped items, XP orbs, projectiles, vehicles, armor stands and villagers.",
-  privacy: "Shows which player is being inspected and what entities are currently near their location, which can reveal activity around a base.",
+  version: "1.1.0",
+  description: "Counts the loaded entities within up to 96 blocks of an online player, and picks out common lag contributors such as dropped items, XP orbs, projectiles, primed TNT, minecarts, armor stands and villagers.",
+  privacy: "Shows which player is being looked at and what entities are near them, which can reveal activity around a base.",
   minPackVersion: "0.4.0",
   commands: [
     {
       name: "entities",
       description: "Count loaded entities around an online player",
-      options: [
-        { name: "player", type: "player", description: "The player whose nearby area to scan", required: true },
-        {
-          name: "chunks", type: "integer", description: "Scan radius in chunks (1-6; one chunk is 16 blocks)", required: false,
-          choices: [
-            { name: "1 chunk · 16 blocks", value: 1 },
-            { name: "2 chunks · 32 blocks", value: 2 },
-            { name: "3 chunks · 48 blocks", value: 3 },
-            { name: "4 chunks · 64 blocks", value: 4 },
-            { name: "5 chunks · 80 blocks", value: 5 },
-            { name: "6 chunks · 96 blocks", value: 6 },
-          ],
-        },
-      ],
-      // Keep this inline form, matching BedrockRelay's published plugin examples.
-      run({ player: name, chunks }) {
-        return entitiesCommand({ player: name, chunks });
+      options: OPTIONS,
+      run(args) {
+        return entitiesCommand(args);
       },
     },
     {
       name: "lagcheck",
-      description: "Highlight likely entity-related lag contributors near a player",
-      options: [
-        { name: "player", type: "player", description: "The player whose nearby area to scan", required: true },
-        {
-          name: "chunks", type: "integer", description: "Scan radius in chunks (1-6; one chunk is 16 blocks)", required: false,
-          choices: [
-            { name: "1 chunk · 16 blocks", value: 1 },
-            { name: "2 chunks · 32 blocks", value: 2 },
-            { name: "3 chunks · 48 blocks", value: 3 },
-            { name: "4 chunks · 64 blocks", value: 4 },
-            { name: "5 chunks · 80 blocks", value: 5 },
-            { name: "6 chunks · 96 blocks", value: 6 },
-          ],
-        },
-      ],
-      // Keep this inline form, matching BedrockRelay's published plugin examples.
-      run({ player: name, chunks }) {
-        return lagcheckCommand({ player: name, chunks });
+      description: "Pick out likely entity-related lag near an online player",
+      options: OPTIONS,
+      run(args) {
+        return lagcheckCommand(args);
       },
     },
   ],
