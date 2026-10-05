@@ -144,13 +144,20 @@ function distanceSquared(a, b) {
   return (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2;
 }
 
-function coordinateLines(matches, center) {
+function coordinateLines(matches, center, includeType = false) {
   const sorted = [...matches].sort((a, b) => distanceSquared(a.location, center) - distanceSquared(b.location, center));
-  const shown = sorted.slice(0, MAX_LOCATIONS_SHOWN).map(({ location }) =>
-    `• \`${Math.floor(location.x)}, ${Math.floor(location.y)}, ${Math.floor(location.z)}\``,
-  );
+  const shown = [];
+  let length = 0;
+  for (const { type, location } of sorted) {
+    if (shown.length >= MAX_LOCATIONS_SHOWN) break;
+    const label = includeType ? prettyName(type) + " · " : "";
+    const line = "• " + label + String.fromCharCode(96) + [location.x, location.y, location.z].map(Math.floor).join(", ") + String.fromCharCode(96);
+    if (length + line.length + 1 > 950) break;
+    shown.push(line);
+    length += line.length + 1;
+  }
   const hidden = sorted.length - shown.length;
-  if (hidden) shown.push(`…and ${hidden} more`);
+  if (hidden) shown.push("…and " + hidden + " more");
   return shown.join("\n") || "_None_";
 }
 
@@ -208,7 +215,7 @@ function lagcheckCommand(args) {
         fields: [
           { name: "Scan", value: scanInfo(scan), inline: false },
           { name: "Matching entities", value: String(matches.length), inline: true },
-          { name: "Coordinates", value: coordinateLines(matches, scan.center) },
+          { name: "Coordinates (X, Y, Z)", value: coordinateLines(matches, scan.center) },
         ],
         footer: { text: "Locations are a loaded-entity snapshot and may change before you arrive." },
       },
@@ -230,6 +237,7 @@ function lagcheckCommand(args) {
         { name: "Total entities", value: String(scan.total), inline: true },
         { name: "Common lag contributors", value: suspectText },
         { name: "Largest other entity types", value: compactLines(otherTypes, 8) },
+        { name: "Nearest entity coordinates (X, Y, Z)", value: coordinateLines(scan.snapshots.filter(({ type }) => type !== "minecraft:player"), scan.center, true) },
       ],
       footer: { text: "This is a snapshot. A large farm of one animal can matter as much as anything above." },
     },
@@ -260,7 +268,7 @@ const LAGCHECK_OPTIONS = [
 export default {
   id: "entity-scan",
   name: "Entity scan",
-  version: "1.1.1",
+  version: "1.1.2",
   description: "Counts the loaded entities within up to 96 blocks of an online player, highlights common lag contributors, and can locate matching entity types.",
   privacy: "Shows which player is being looked at and what entities are near them, which can reveal activity around a base.",
   minPackVersion: "0.4.0",
