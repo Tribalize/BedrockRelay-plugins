@@ -231,13 +231,13 @@ function lagcheckCommand(args) {
   return {
     embed: {
       color: suspects.length ? 0xe67e22 : 0x57f287,
-      author: { name: `Lag check near ${player.name}`, player: player.name },
+      author: { name: `Lag check near ${player.name} · v1.1.5`, player: player.name },
+      description: "**Nearest entity world coordinates (X, Y, Z)**\n" + coordinateLines(scan.snapshots.filter(({ type }) => type !== "minecraft:player"), scan.center, true),
       fields: [
         { name: "Scan", value: scanInfo(scan), inline: false },
         { name: "Total entities", value: String(scan.total), inline: true },
         { name: "Common lag contributors", value: suspectText },
         { name: "Largest other entity types", value: compactLines(otherTypes, 8) },
-        { name: "Nearest entity coordinates (X, Y, Z)", value: coordinateLines(scan.snapshots.filter(({ type }) => type !== "minecraft:player"), scan.center, true) },
       ],
       footer: { text: "This is a snapshot. A large farm of one animal can matter as much as anything above." },
     },
@@ -268,7 +268,7 @@ const LAGCHECK_OPTIONS = [
 export default {
   id: "entity-scan",
   name: "Entity scan",
-  version: "1.1.2",
+  version: "1.1.5",
   description: "Counts the loaded entities within up to 96 blocks of an online player, highlights common lag contributors, and can locate matching entity types.",
   privacy: "Shows which player is being looked at and what entities are near them, which can reveal activity around a base.",
   minPackVersion: "0.4.0",

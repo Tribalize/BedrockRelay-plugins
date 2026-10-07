@@ -1,13 +1,19 @@
 {
   "id": "entity-scan",
   "name": "Entity scan",
-  "version": "1.1.2",
+  "version": "1.1.5",
   "author": "PPTribalize",
   "description": "Counts the loaded entities within up to 96 blocks of an online player, highlights common lag contributors, and can locate matching entity types.",
   "privacy": "Shows which player is being looked at and what entities are near them, which can reveal activity around a base.",
   "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/entity-scan",
   "minPackVersion": "0.4.0",
-  "platforms": ["server", "realm"],
+  "platforms": [
+    "server",
+    "realm"
+  ],
   "category": "tools",
-  "commands": ["/entities <player> [chunks]", "/lagcheck <player> [entity_type] [chunks]"]
+  "commands": [
+    "/entities <player> [chunks]",
+    "/lagcheck <player> [entity_type] [chunks]"
+  ]
 }

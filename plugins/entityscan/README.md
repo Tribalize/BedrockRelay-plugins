@@ -36,7 +36,7 @@ only to the requester. BedrockRelay performs the Discord permission check
 before the plugin's `run()` function is called; the plugin does not receive
 Discord roles or tokens and cannot make a separate in-code role list.
 
-The current file is version **1.1.2**. If an earlier version is already
+The current file is version **1.1.5**. If an earlier version is already
 installed, use **Upload new version**, install the update for the server, and
 restart BDS.
 
@@ -60,3 +60,7 @@ type is causing server lag.
 
 The plugin contains no network requests, no server-secret access, and no
 world-changing behavior.
+
+Version 1.1.5 shows coordinates above the summary and its version in the summary heading. Select chunks: 4 for 64 blocks and entity_type: minecart for a focused scan. chunks accepts 1-6, not a block count.
+
+Disable/remove the temporary Entityscan test plugin in BedrockRelay, install this update on the original Entity scan plugin, and restart the Minecraft server. The production commands are /entities and /lagcheck.
