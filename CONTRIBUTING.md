@@ -47,6 +47,7 @@ your plugin will be reviewed against.
 | `minPackVersion` | yes | The oldest BedrockRelay pack it works with: `0.4.2` if it uses `postKinds`, `0.4.0` if it uses `choices`, `public`, `confirm`, `posts`, `linkedPlayer`, `board` or a drawn picture, otherwise `0.3.0`. |
 | `platforms` | no | Where it runs: `["server"]`, `["realm"]` or both. Missing means dedicated servers only. Only add `"realm"` once it has run on a Realm: see [Plugins on Realms](https://bedrockrelay.com/developers/realms.html). |
 | `minRealmPackVersion` | no | The oldest Realm pack it works with. Defaults to `1.2.0`. |
+| `replaces` | no | Other catalog plugins this one takes over from, by id: installing it removes them in the same change, so two plugins never both claim a command. Agreed with reviewers first. |
 | `category` | no | Where owners find it when filtering the catalog: one of `moderation`, `players`, `stats`, `world`, `fun` or `tools`. Reviewers may suggest a better fit. |
 | `commands` | yes | How each command is used, for the catalog page. |
 | `screenshots` | no | Up to 4 pictures of the plugin in Discord, shown on its catalog card. Each is a `file` in the plugin's folder (PNG, JPEG or WebP, under 1 MB) and a `caption` saying what it shows, which is also its alt text. Crop to the message itself; the card shows the top of each picture, and a click shows it whole. |

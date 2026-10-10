@@ -1,0 +1,25 @@
+{
+  "id": "statistics",
+  "name": "Statistics",
+  "version": "1.0.0",
+  "author": "BedrockRelay",
+  "description": "Counts everything players do: playtime, travel, kills, deaths, blocks mined and placed, items, containers opened and more. Players see their numbers in game with /statistics; Discord gets top tens, player cards and boards that update themselves. Replaces Leaderboards and keeps its totals.",
+  "privacy": "Shows each player's statistics, including the names of players they've killed, to everyone who can use its commands. Sent to mcBedrock.net only if the world's owner lists the world there on its Integrations tab.",
+  "posts": "Playtime milestones: when someone reaches 10, 25, 50, 100, 250, 500 or 1,000 hours.",
+  "homepage": "https://github.com/mygen/BedrockRelay-plugins/tree/main/plugins/statistics",
+  "minPackVersion": "0.10.0",
+  "minRealmPackVersion": "1.5.0",
+  "platforms": [
+    "server",
+    "realm"
+  ],
+  "category": "stats",
+  "replaces": [
+    "leaderboards"
+  ],
+  "commands": [
+    "/top <stat>",
+    "/stats [player]",
+    "/statistics in game"
+  ]
+}
