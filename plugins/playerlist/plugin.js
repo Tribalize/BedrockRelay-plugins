@@ -8,8 +8,11 @@ import { system, world } from "@minecraft/server";
  */
 
 const PREFIX = "bedrockrelay:pl:";
-// The Leaderboards plugin's records: when it's installed, its playtime is the total shown, so the two never disagree.
+// Another plugin's playtime, when it has one, is the total shown, so the two never disagree. Statistics first: it
+// replaces Leaderboards, whose records stay in the world, frozen, after it's removed.
+const STATISTICS = "statistics:m:";
 const LEADERBOARDS = "bedrockrelay:lb:";
+const TICKS_PER_SECOND = 20;
 // BedrockRelay's own bot on a Realm carries this tag: it isn't a player, so it's never listed.
 const BOT_TAG = "bedrockrelay:bot";
 const isBot = (player) => { try { return player.hasTag(BOT_TAG); } catch { return false; } };
@@ -60,8 +63,10 @@ function save() {
 }
 system.runInterval(save, 1200);
 
-/** Total playtime in seconds: the Leaderboards plugin's when it has one, else our own count. */
+/** Total playtime in seconds: the Statistics plugin's (kept in ticks), else Leaderboards', else our own count. */
 function total(player) {
+  const statistics = read(STATISTICS + player.id)?.s?.pt;
+  if (typeof statistics === "number") return statistics / TICKS_PER_SECOND;
   const counted = read(LEADERBOARDS + player.id)?.pt;
   return typeof counted === "number" ? counted : record(player.id).pt ?? 0;
 }
@@ -102,7 +107,7 @@ system.runInterval(() => {
 export default {
   id: "playerlist",
   name: "Player list",
-  version: "1.0.1",
+  version: "1.0.2",
   description: "Who is online right now, the device each is playing on, and their playtime.",
   commands: [
     {
