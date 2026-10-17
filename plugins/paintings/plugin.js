@@ -515,11 +515,11 @@ function render(dimension, origin, forward, settings = {}) {
  });
 }
 export default {
- id: "ingame-pictures",
+ id: "ingame-paintings",
  name: "Paintings",
  version: "1.9.10",
  description: "Draws a simple block-colour picture from your player's eye position and viewing direction in Discord.",
- privacy: "Pictures reveal nearby builds, players and entities. Pictures are posted publicly in the command Discord channel.",
+ privacy: "Paintings reveal nearby builds, players and entities. Paintingss are posted publicly in the command Discord channel.",
  platforms: ["server"],
  minPackVersion: "0.4.0",
  commands: [{
